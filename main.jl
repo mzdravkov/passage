@@ -1,4 +1,5 @@
 using Graphs
+using Gaston
 
 # array of tuples of the type (x, y, z)
 points = [(1, 1, 0),
@@ -6,6 +7,10 @@ points = [(1, 1, 0),
           (2.5, 2, 0.5),
           (3.14, 2, -0.5),
           (4, 4, 0)]
+
+xs = map((p)-> p[1], points)
+ys = map((p)-> p[2], points)
+zs = map((p)-> p[3], points)
 
 function euclidian_distance(p1, p2)
   x = (p1[1] - p2[1]) ^ 2
@@ -60,12 +65,14 @@ end
 
 # as the edges() function may return a graph with some vertexes that aren't pointed by any edge, this function ensures that every vertex is reachable. It will do so by adding the inverted edges of edges that start from this vertex.
 function ensure_graph_correctness(edges, points)
+  # local copy of points
+  lpoints = copy(points)
   for edge in edges
-    points[edge[2]] = (0, 0, Inf)
+    lpoints[edge[2]] = (0, 0, Inf)
   end
 
-  for i = 1:length(points)
-    if points[i] != (0, 0, Inf)
+  for i = 1:length(lpoints)
+    if lpoints[i] != (0, 0, Inf)
       for edge in edges
         if edge[1] == i
           push!(edges, (edge[2], edge[1], edge[3]))
@@ -76,6 +83,20 @@ function ensure_graph_correctness(edges, points)
   edges
 end
 
+# BFStates stands for BellmanFordStates
+function path(BFStates, from, to)
+  curr_path = Int64[]
+  push!(curr_path, to)
+  pos = BFStates.parents[to]
+  while pos != from
+    push!(curr_path, pos)
+    pos = BFStates.parents[pos]
+  end
+  push!(curr_path, from)
+  (reverse(curr_path), BFStates.dists[to])
+end
+
+println(points)
 wedges = edges(points)
 println(wedges)
 wedges = ensure_graph_correctness(wedges, points)
@@ -93,3 +114,32 @@ end
 
 res = bellman_ford_shortest_paths(graph, weights, [1])
 println(res)
+println()
+println(path(res, 1, 5))
+
+function llama(x, y)
+  for point in points
+    println(typeof(point), typeof((x, y)))
+    if point[1] == x && point[2] == y
+      return point[3]
+    end
+  end
+  return 0
+end
+
+
+figure()
+axes = Gaston.AxesConf()
+curve = Gaston.CurveConf()
+curve.plotstyle = "points"
+Gaston.addconf(axes)
+for edge in wedges
+  p1, p2 = edge
+  x1, y1, z1 = points[p1]
+  x2, y2, z2 = points[p2]
+  # really lame api forces me to add 4 identical points instead of just one
+  Gaston.addcoords([x1, x1], [y1, y1], [z1 z1; z1 z1], curve)
+  Gaston.addcoords([x2, x2], [y2, y2], [z2 z2; z2 z2], curve)
+end
+Gaston.llplot()
+sleep(3600)
