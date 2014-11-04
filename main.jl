@@ -117,17 +117,6 @@ println(res)
 println()
 println(path(res, 1, 5))
 
-function llama(x, y)
-  for point in points
-    println(typeof(point), typeof((x, y)))
-    if point[1] == x && point[2] == y
-      return point[3]
-    end
-  end
-  return 0
-end
-
-
 figure()
 axes = Gaston.AxesConf()
 curve = Gaston.CurveConf()
